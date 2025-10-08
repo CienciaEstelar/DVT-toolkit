@@ -1,105 +1,113 @@
-# 🌀 Dynamic Vacuum Toolkit (DVT)
+# 🌌 Geometría Causal-Informacional (GCI)  
+### Framework de Cosmología Escalar-Tensor (DVT)
 
-### Framework Cosmológico Escalar-Tensor y Análisis Bayesiano de Energía Oscura Dinámica
-
-El **Dynamic Vacuum Toolkit (DVT)** es un *framework* modular y robusto para el estudio cosmológico de modelos de **energía oscura dinámica** (tipo escalar-tensor).  
-Combina derivación simbólica, integración numérica e inferencia estadística mediante **Procesos Gaussianos (GP)** y **MCMC** (Cadena de Markov Monte Carlo).  
-
-Su arquitectura garantiza **trazabilidad completa**, **reproducibilidad**, y **control de errores a nivel de módulo**, asegurando la estabilidad en simulaciones prolongadas.
+Este repositorio contiene el **Dynamic Vacuum Toolkit (DVT)**, enfocado en la implementación de modelos de **Energía Oscura Dinámica**.  
+El proyecto principal es la **Geometría Causal-Informacional (GCI)**, que unifica principios de información, gravedad cuántica y cosmología.
 
 ---
 
-## ⚙️ Filosofía y Flujo de Ejecución
+## 🔎 Descripción del Proyecto
 
-El DVT sigue el principio **Code → Solve → Learn → Infer → Run**, donde cada módulo cumple una etapa específica del flujo cosmológico:
+El script principal, `modelo_cosmologico.py`, es un **framework de cosmología** que realiza:
 
-1. **Code (`symbolic.py`)** → Deriva las ecuaciones de movimiento a partir del lagrangiano escalar-tensor.  
-2. **Solve (`solver.py`, `cosmology.py`)** → Integra las EDOs para obtener la expansión cósmica `H(z)`.  
-3. **Learn (`potential.py`)** → Reconstruye el potencial escalar `V(φ)` mediante un Proceso Gaussiano (GP).  
-4. **Infer (`data.py`, `likelihood.py`, `mcmc.py`)** → Combina datos observacionales con el modelo y realiza inferencia bayesiana (`χ²`, MCMC).  
-5. **Run (`run_pipeline.py`)** → Orquesta el *pipeline* completo de principio a fin.
-
----
-
-## 🧩 Arquitectura del Proyecto
-
-| Módulo | Descripción | Conexiones |
-|--------|--------------|------------|
-| **`__init__.py`** | Punto de entrada y API pública del paquete `genesis_modular`. Implementa *lazy imports* para optimización y define el mapa global de clases y funciones (`load_data`, `PotentialGP`, `DVT_MCMC`). | Conecta con `config`, `data`, `potential`, `solver`, `cosmology`, `likelihood`, `mcmc`. |
-| **`config.py`** | Módulo central de configuración global. Define el *logger* (`logging.getLogger("DVT")`), la semilla de reproducibilidad (`SEED=42`), rutas base y *flags* (`USE_JAX`). | Importado por todos los módulos para mantener consistencia global. |
-| **`symbolic.py`** | Núcleo teórico: deriva las ecuaciones de campo (Φ̈, ä) mediante `sympy.euler_equations`. Incluye lambdificación y caché (`cloudpickle`). | Exporta `phi_ddot_func` y `a_ddot_func` a `solver.py`. Usa `config.py` para *logging* y caché. |
-| **`potential.py`** | Contiene la clase `PotentialGP`, que reconstruye `V(φ)` con un Proceso Gaussiano (GP). Incluye validación, serialización (`save/load`), y escalado físico del potencial. | Usado por `mcmc.py` (actualización GP) y `likelihood.py` (evaluación de V y V'). |
-| **`solver.py`** | Motor numérico: integra las EDOs cosmológicas acopladas para obtener `H(z)`. Incluye control de singularidades (`SafetyLimits`) y caché LRU para rendimiento. | Dependencia principal de `likelihood.py`. Usa funciones de `symbolic.py`. |
-| **`data.py`** | Carga y valida datos observacionales (SN, CMB, BAO, GW). Implementa validación de *redshifts* y covarianzas. | Llamado por `run_pipeline.py` y `mcmc.py`. Alimenta la clase `Likelihood`. |
-| **`cosmology.py`** | Clase `CosmoHelper` para cálculos de distancias cosmológicas (`∫ dz/H(z)`), luminosidad y diámetro angular. Optimizado con interpolación PCHIP. | Utilizado por `likelihood.py` para comparar modelo con datos observacionales. |
-| **`likelihood.py`** | Contiene la clase `Likelihood`, que calcula la *log-verosimilitud total* (`−0.5 χ²_total`) a partir de las comparaciones entre modelo y datos. | Núcleo del *sampler* `mcmc.py`. Usa `solver.py` y `cosmology.py`. |
-| **`mcmc.py`** | Implementa la clase `DVT_MCMC` (basada en `emcee`). Explora el espacio de parámetros cosmológicos con multiprocesamiento, control de convergencia y guardado seguro. | Depende de `likelihood.py`, `potential.py`, y `data.py`. |
-| **`run_pipeline.py`** | Script ejecutable principal (`__main__`). Define CLI, parámetros del MCMC y genera resultados gráficos (`corner plots`, `H(z)`, potenciales). | Coordina todos los módulos para ejecutar la inferencia completa. |
+- **Derivación Simbólica:** Genera las Ecuaciones de Klein-Gordon y Friedmann modificadas a partir del Lagrangiano (usando *SymPy*).  
+- **Calibración:** Fija la frecuencia de corte fundamental (νₐ) y la densidad de energía del vacío (ρₐ) con alta precisión.  
+- **Simulación Numérica:** Integra las EDOs para la evolución cosmológica *a(t)* y *Φ(t)*.  
+- **Predicciones Clave:** Calcula la masa del axión predicha (*mₐ ≈ 3.61 meV*).
 
 ---
 
-## 🧠 Capacidades Principales
+## 📂 Estructura del Repositorio
 
-- 🔹 **Derivación simbólica exacta** (Lagrangiano escalar-tensor con `sympy`).
-- 🔹 **Integración numérica estable** con control de errores físicos.
-- 🔹 **Reconstrucción no paramétrica** del potencial escalar mediante GP.
-- 🔹 **Inferencia bayesiana MCMC** con diagnóstico de convergencia (`τ`, acceptance rate).
-- 🔹 **Gestión inteligente de cachés** para evitar recálculos y acelerar la ejecución.
-- 🔹 **Pipeline reproducible** de extremo a extremo: derivación → solución → inferencia.
-
----
-
-## 📦 Dependencias Principales
-
-- `sympy` — Derivación simbólica y euler equations.  
-- `numpy`, `scipy` — Cálculo numérico y EDOs.  
-- `scikit-learn` — Procesos Gaussianos (GP).  
-- `emcee` — Sampler MCMC.  
-- `matplotlib` / `corner` — Visualización de resultados.  
-- `cloudpickle` — Caché simbólica y serialización.
+| Carpeta | Contenido Principal | Propósito |
+| :--- | :--- | :--- |
+| `/` | Scripts de ejecución principal (`modelo_cosmologico.py`) | Ejecución central del modelo |
+| `analysis/` | Scripts de verificación de consistencia | Blindaje teórico (e.g. `derivacion_vc.py` para Punto Fijo RG) |
+| `docs/` | Manuscritos, apéndices y documentación | Referencia teórica |
+| `output/` | Archivos generados | Ecuaciones (LaTeX), gráficos (.png, .pdf) y resultados de simulación |
 
 ---
 
-## ▶️ Ejecución Rápida
+## ▶️ Instrucciones de Reproducción
 
-### 1. Instalación
+### 1️⃣ Instalación de Dependencias
+
+Se requiere **Python 3.9+** y las librerías listadas en `requirements.txt`:
+
 ```bash
 pip install -r requirements.txt
 ````
 
-### 2. Correr el Pipeline Completo
+---
+
+### 2️⃣ Ejecución de la Simulación Principal
+
+Este script realiza la derivación, calibración y simulación:
 
 ```bash
-python run_pipeline.py
+python modelo_cosmologico.py
 ```
 
-### 3. Verificar Blindaje Teórico (RG)
+---
+
+### 3️⃣ Verificación del Blindaje Teórico
+
+Ejecute este script para verificar simbólicamente la consistencia de la escala νₐ con la simetría del Grupo de Renormalización (Punto Fijo RG):
 
 ```bash
 python analysis/derivacion_vc.py
 ```
 
----
-
-## 📊 Salidas del Sistema
-
-Los resultados se almacenan automáticamente en la carpeta `output/`:
-
-* 🧮 **Ecuaciones simbólicas** (`.tex`)
-* 📈 **Gráficos cosmológicos** (`.png`, `.pdf`)
-* 📊 **Resultados MCMC** (`chains.h5`, `corner_plots/`)
+Una vez completada la ejecución, los archivos de salida (`.tex`, `.png`, `.pdf`) se generarán automáticamente dentro de la carpeta `output/`.
 
 ---
 
-## 🧩 Proyecto y Autoría
+## ⚙️ Ejecución del *Pipeline* Completo vía CLI
+
+Absolutamente. La línea que señalas **es el comando CLI (Command Line Interface)**.
+Esa es la instrucción exacta que usas en la terminal de Linux para iniciar la ejecución del *pipeline* del DVT, cargando todos los módulos y comenzando el muestreo **MCMC**.
+
+---
+
+### 🔍 Desglose del Comando CLI
+
+El comando es complejo porque ejecuta un **paquete modular** (`genesis_modular`) y no un simple script.
+Cada parámetro tiene un propósito específico:
+
+| Fragmento del Comando                    | Propósito                                                                                               | Valor Usado                                                         |
+| :--------------------------------------- | :------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------ |
+| `python -m genesis_modular.run_pipeline` | **EJECUTABLE PRINCIPAL.** Ejecuta el módulo `run_pipeline` dentro del paquete `genesis_modular`.        | `run_pipeline`                                                      |
+| `--gp "..."`                             | **Modelo GP (OBLIGATORIO).** Especifica el modelo del potencial escalar *(V(Φ))* previamente entrenado. | `"genesis_modular/dvt/dvt_ultra_results/model_20250909_165051.pkl"` |
+| `--walkers 150`                          | **Parámetro MCMC.** Número de cadenas simultáneas para el muestreo.                                     | `150`                                                               |
+| `--steps 15000`                          | **Parámetro MCMC.** Iteraciones por cada cadena.                                                        | `15000`                                                             |
+| `--pool 6`                               | **Paralelización.** Núcleos de CPU utilizados para el cálculo del *likelihood*.                         | `6`                                                                 |
+| `--thin 10`                              | **Post-procesamiento.** Adelgazamiento (solo guarda 1 de cada 10 pasos).                                | `10`                                                                |
+| `--outdir "..."`                         | **Salida.** Carpeta donde se guardarán los resultados (cadenas, gráficos, resúmenes).                   | `"results/dvt_run_paper_con_gp"`                                    |
+
+---
+
+### 🚀 Ejemplo de Comando Completo
+
+```bash
+python -m genesis_modular.run_pipeline \
+  --gp "genesis_modular/dvt/dvt_ultra_results/model_20250909_165051.pkl" \
+  --walkers 150 \
+  --steps 15000 \
+  --pool 6 \
+  --thin 10 \
+  --outdir "results/dvt_run_paper_con_gp"
+```
+
+---
+
+## 🧩 En Resumen
+
+✅ Este repositorio implementa un **marco teórico falsable** para la Energía del Vacío Dinámica.
+🔬 Incluye desde la derivación simbólica del modelo hasta la inferencia bayesiana completa.
+📈 Todo el flujo —derivación, calibración, simulación y análisis MCMC— puede reproducirse desde terminal o notebooks.
+
+---
 
 **Autor:** Juan Galaz
-**Framework:** Dynamic Vacuum Toolkit (DVT) — *Geometría Causal-Informacional (GCI)*
-**Institución:** Universidad de Santiago de Chile (USACH)
-
----
-
-## 📜 Licencia
-
-Distribuido bajo licencia **MIT**.
-Promueve la investigación abierta, reproducible y colaborativa en cosmología teórica.
+**Proyecto:** Dynamic Vacuum Toolkit (DVT) – Geometría Causal-Informacional (GCI)
+**Licencia:** MIT
